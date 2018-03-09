@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+# Create a basic config if one doesn't already exist
+if [ ! -f /etc/bitcoin/bitcoin.conf ]; then
+    cat << EOF > /etc/bitcoin/bitcoin.conf
+datadir=/var/bitcoin
+rpcpassword=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+rpcuser=rpcuser
+server=1
+txindex=1
+EOF
+fi
+
+# Make sure the bitcoin config and data has correct ownership
+chown -R bitcoin.bitcoin /{etc,var}/bitcoin >/dev/null 2>&1
+
+# Launch bitcoind as the bitcoin user, with the arguments passed to this script
+exec runuser bitcoin -c "/opt/bitcoin/bin/bitcoind ${*}"
